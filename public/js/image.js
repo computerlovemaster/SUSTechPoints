@@ -9,22 +9,15 @@ function BoxImageContext(ui){
     
     // draw highlighted box
     this.updateFocusedImageContext = function(box){
-        var scene_meta = box.world.frameInfo.sceneMeta;
-
-
         let bestImage = choose_best_camera_for_point(
-            scene_meta,
+            box.world,
             box.position);
 
         if (!bestImage){
             return;           
         }
-
-        if (!scene_meta.calib.camera){
-            return;
-        }
         
-        var calib = scene_meta.calib.camera[bestImage]
+        var calib = box.world.getCameraCalib(bestImage)
         if (!calib){
             return;
         }
@@ -468,16 +461,11 @@ class ImageContext extends MovableView{
 
 
     getCalib(){
-        var scene_meta = this.world.sceneMeta;
-           
-        if (!scene_meta.calib.camera){
+        if (!this.world || !this.world.getCameraCalib){
             return null;
         }
 
-        //var active_camera_name = this.world.cameras.active_name;
-        var calib = scene_meta.calib.camera[this.name];
-
-        return calib;
+        return this.world.getCameraCalib(this.name);
     }
 
 
@@ -1172,16 +1160,21 @@ function all_points_in_image_range(p){
 }
 
 
-function  choose_best_camera_for_point(scene_meta, center){
-        
-    if (!scene_meta.calib){
+function  choose_best_camera_for_point(world, center){
+    if (!world || !world.sceneMeta || !world.sceneMeta.camera){
         return null;
     }
 
     var proj_pos = [];
-    for (var i in scene_meta.calib.camera){
-        var imgpos = matmul(scene_meta.calib.camera[i].extrinsic, [center.x,center.y,center.z,1], 4);
-        proj_pos.push({calib: i, pos: vector4to3(imgpos)});
+    for (var i in world.sceneMeta.camera){
+        let cameraName = world.sceneMeta.camera[i];
+        let calib = world.getCameraCalib(cameraName);
+        if (!calib || !calib.extrinsic){
+            continue;
+        }
+
+        var imgpos = matmul(calib.extrinsic, [center.x,center.y,center.z,1], 4);
+        proj_pos.push({calib: cameraName, pos: vector4to3(imgpos)});
     }
 
     var valid_proj_pos = proj_pos.filter(function(p){

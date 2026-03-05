@@ -238,6 +238,44 @@ def read_ego_pose(scene, frame):
     else:
       return None
 
+def read_camera_calib(scene, frame):
+    scene_dir = os.path.join(root_dir, scene)
+    camera_dir = os.path.join(scene_dir, "camera")
+    calib_camera_dir = os.path.join(scene_dir, "calib", "camera")
+
+    if not os.path.isdir(calib_camera_dir):
+        return {}
+
+    camera_names = []
+    if os.path.isdir(camera_dir):
+        camera_names = [x for x in os.listdir(camera_dir)
+                        if os.path.isdir(os.path.join(camera_dir, x))]
+        camera_names.sort()
+
+    # include static calib json names even if camera folder is absent
+    for c in os.listdir(calib_camera_dir):
+        calib_name, ext = os.path.splitext(c)
+        if ext == ".json" and calib_name not in camera_names:
+            camera_names.append(calib_name)
+
+    calib = {}
+    for camera_name in camera_names:
+        frame_calib_file = os.path.join(calib_camera_dir, camera_name, frame + ".json")
+        static_calib_file = os.path.join(calib_camera_dir, camera_name + ".json")
+        target_file = None
+
+        # priority: frame-level > static
+        if os.path.isfile(frame_calib_file):
+            target_file = frame_calib_file
+        elif os.path.isfile(static_calib_file):
+            target_file = static_calib_file
+
+        if target_file:
+            with open(target_file) as f:
+                calib[camera_name] = json.load(f)
+
+    return calib
+
 def save_annotations(scene, frame, anno):
     filename = os.path.join(root_dir, scene, "label", frame+".json")
     with open(filename, 'w') as outfile:

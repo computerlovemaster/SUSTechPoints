@@ -8,15 +8,60 @@ function Calib(data, editor){
 
     var euler_angle={x:0, y:0, y:0};
     var translate = {x:0, y:0, z:0};
+
+    function get_active_camera_name(world, editor){
+        if (world &&
+            world.cameras &&
+            world.cameras.active_name){
+            return world.cameras.active_name;
+        }
+
+        if (editor &&
+            editor.imageContextManager &&
+            editor.imageContextManager.bestCamera){
+            return editor.imageContextManager.bestCamera;
+        }
+
+        if (world && world.sceneMeta && world.sceneMeta.camera && world.sceneMeta.camera.length > 0){
+            return world.sceneMeta.camera[0];
+        }
+
+        return null;
+    }
+
+    function ensure_world_calib(world, camera_name){
+        if (!world || !camera_name){
+            return null;
+        }
+
+        if (!world.frameCalib){
+            world.frameCalib = {};
+        }
+
+        if (!world.frameCalib[camera_name]){
+            let baseCalib = world.getCameraCalib(camera_name);
+            if (!baseCalib){
+                return null;
+            }
+
+            // keep calibration editing world-local and frame-local
+            world.frameCalib[camera_name] = JSON.parse(JSON.stringify(baseCalib));
+        }
+
+        return world.frameCalib[camera_name];
+    }
     
     this.save_calibration = function(){
     
         
-        var scene_meta = data.meta[data.world.frameInfo.scene];
+        let world = data.world;
     
     
-        var active_camera_name = data.world.cameras.active_name;
-        var calib = scene_meta.calib.camera[active_camera_name]
+        var active_camera_name = get_active_camera_name(world, this.editor);
+        var calib = world.getCameraCalib(active_camera_name);
+        if (!calib){
+            return;
+        }
         
         var extrinsic = calib.extrinsic.map(function(x){return x*1.0;});
     
@@ -51,10 +96,13 @@ function Calib(data, editor){
     
     // show a manipulating box
     this.start_calibration = function(){
-        var scene_meta = this.data.meta[data.world.frameInfo.scene];
+        let world = this.data.world;
     
-        var active_camera_name = this.data.world.cameras.active_name;
-        var calib = scene_meta.calib.camera[active_camera_name]
+        var active_camera_name = get_active_camera_name(world, this.editor);
+        var calib = ensure_world_calib(world, active_camera_name);
+        if (!calib){
+            return;
+        }
         var extrinsic = calib.extrinsic.map(function(x){return x*1.0;});
         let viewMatrix = [0, -1,  0,  0,  //row vector
                         0, 0,  -1, 0,

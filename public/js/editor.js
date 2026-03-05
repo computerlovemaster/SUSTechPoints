@@ -1724,7 +1724,7 @@ function Editor(editorUi, wrapperUi, editorCfg, data, name="editor"){
             // switch camera
             if (!this.editorCfg.disableMainImageContext){
                 var best_camera = this.imageContextManager.choose_best_camera_for_point(
-                    this.selected_box.world.frameInfo.sceneMeta,
+                    this.selected_box.world,
                     this.selected_box.position);
 
                 if (best_camera){
