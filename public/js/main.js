@@ -41,24 +41,40 @@ async function createMainEditor(){
 
 async function start(){
 
- 
   let mainEditor = await createMainEditor();
 
-
-  let url_string = window.location.href
-  let url = new URL(url_string);
-  //language
-  let scene = url.searchParams.get("scene");
+  let url = new URL(window.location.href);
+  let dataset = url.searchParams.get("dataset") || url.searchParams.get("scene");
   let frame = url.searchParams.get("frame");
 
-  if (scene && frame)
-  {
-    mainEditor.load_world(scene, frame);
+  if (!dataset){
+    return;
   }
+
+  if (!Object.prototype.hasOwnProperty.call(mainEditor.data.sceneDescList, dataset)){
+    console.error(`dataset not found: ${dataset}`);
+    return;
+  }
+
+  await mainEditor.scene_changed(dataset);
+
+  let meta = mainEditor.data.getMetaBySceneName(dataset);
+  if (!meta || !meta.frames || meta.frames.length === 0){
+    console.error(`dataset has no frames: ${dataset}`);
+    return;
+  }
+
+  let targetFrame = frame;
+  if (!targetFrame || !meta.frames.includes(targetFrame)){
+    targetFrame = meta.frames[0];
+  }
+
+  mainEditor.editorUi.querySelector("#scene-selector").value = dataset;
+  mainEditor.editorUi.querySelector("#frame-selector").value = targetFrame;
+  mainEditor.load_world(dataset, targetFrame);
 }
 
 
 
 
 start();
-
