@@ -46,6 +46,24 @@ function Annotation(sceneMeta, world, frameInfo){
         return this.boxes.filter(b=>b!=box).filter(b=>intersect(box, b));
     };
 
+    this.normalizeAnnotations = function(annotations){
+        if (Array.isArray(annotations)){
+            return annotations;
+        }
+
+        if (annotations && typeof annotations === "object"){
+            for (const key of ["annotations", "boxes", "labels", "objects"]){
+                if (Array.isArray(annotations[key])){
+                    console.warn("annotation wrapped in key:", key, this.frameInfo.scene, this.frameInfo.frame);
+                    return annotations[key];
+                }
+            }
+        }
+
+        console.error("invalid annotations payload:", this.frameInfo.scene, this.frameInfo.frame, annotations);
+        return [];
+    };
+
     this.preload = function(on_preload_finished){
         this.on_preload_finished = on_preload_finished;
         this.load_annotation((boxes)=>this.proc_annotation(boxes));
@@ -402,6 +420,7 @@ function Annotation(sceneMeta, world, frameInfo){
 
 
     this.proc_annotation = function(boxes){
+        boxes = this.normalizeAnnotations(boxes);
         
         // boxes = this.transformBoxesByEgoPose(boxes);
         // boxes = this.transformBoxesByOffset(boxes);
@@ -436,6 +455,7 @@ function Annotation(sceneMeta, world, frameInfo){
             
                 if (this.status == 200) {
                     let ann = _self.frameInfo.anno_to_boxes(this.responseText);
+                    ann = _self.normalizeAnnotations(ann);
                     on_load(ann);
                 }
             
@@ -546,6 +566,7 @@ function Annotation(sceneMeta, world, frameInfo){
     };
 
     this.createBoxes = function(annotations){
+        annotations = this.normalizeAnnotations(annotations);
         return annotations.map((b)=>{
             return this.createOneBoxByAnn(b);
         });

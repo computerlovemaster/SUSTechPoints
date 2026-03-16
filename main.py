@@ -32,7 +32,7 @@ from algos import pre_annotate
 
 class Root(object):
     @cherrypy.expose
-    def index(self, scene="", frame=""):
+    def index(self, scene="", frame="", dataset="", **_query):
       tmpl = env.get_template('index.html')
       return tmpl.render()
   

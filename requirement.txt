@@ -1,5 +1,6 @@
-tensorflow>=2.1
+tensorflow==2.10.1
 jinja2
 cherrypy
 filterpy
 cheroot != 8.4.4
+numpy==1.23.5

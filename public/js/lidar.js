@@ -100,6 +100,9 @@ function Lidar(sceneMeta, world, frameInfo){
                 
                 
                 let position = pcd.position;
+                if ( position.length === 0 ) {
+                    console.warn("pcd loaded but contains no valid points:", _self.frameInfo.get_pcd_path());
+                }
 
 
                 // build geometry
@@ -195,9 +198,8 @@ function Lidar(sceneMeta, world, frameInfo){
             },
 
             // on error
-            function(){
-                //error
-                console.log("load pcd failed.");
+            function(error){
+                console.error("load pcd failed:", _self.frameInfo.get_pcd_path(), error);
                 _self._afterPreload();
             },
 

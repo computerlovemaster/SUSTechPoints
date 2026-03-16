@@ -219,13 +219,33 @@ def get_one_scene(s):
     return scene
 
 
+def normalize_annotations(ann, scene=None, frame=None):
+    if isinstance(ann, list):
+        return ann
+
+    if isinstance(ann, dict):
+        for key in ("annotations", "boxes", "labels", "objects"):
+            value = ann.get(key)
+            if isinstance(value, list):
+                print("annotation wrapped in key", key, "for", scene, frame)
+                return value
+
+        print("invalid annotation object for", scene, frame, "keys:", list(ann.keys()))
+        return []
+
+    if ann is None:
+        return []
+
+    print("invalid annotation type for", scene, frame, "type:", type(ann).__name__)
+    return []
+
+
 def read_annotations(scene, frame):
     filename = os.path.join(root_dir, scene, "label", frame+".json")
     if (os.path.isfile(filename)):
       with open(filename,"r") as f:
         ann=json.load(f)
-        #print(ann)          
-        return ann
+        return normalize_annotations(ann, scene, frame)
     else:
       return []
 

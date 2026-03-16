@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-cd /root/SUSTechPOINTS && python3 ./main.py
+cd /app
+
+exec uwsgi --ini ./uwsgi.ini
