@@ -252,10 +252,13 @@ def read_camera_calib(scene, frame):
                         if os.path.isdir(os.path.join(camera_dir, x))]
         camera_names.sort()
 
-    # include static calib json names even if camera folder is absent
+    # include calib names even if camera folder is absent
     for c in os.listdir(calib_camera_dir):
+        calib_file = os.path.join(calib_camera_dir, c)
         calib_name, ext = os.path.splitext(c)
-        if ext == ".json" and calib_name not in camera_names:
+        if os.path.isdir(calib_file) and c not in camera_names:
+            camera_names.append(c)
+        elif ext == ".json" and calib_name not in camera_names:
             camera_names.append(calib_name)
 
     calib = {}
@@ -271,8 +274,11 @@ def read_camera_calib(scene, frame):
             target_file = static_calib_file
 
         if target_file:
-            with open(target_file) as f:
-                calib[camera_name] = json.load(f)
+            try:
+                with open(target_file) as f:
+                    calib[camera_name] = json.load(f)
+            except (OSError, json.JSONDecodeError) as exc:
+                print("skip invalid camera calib", scene, frame, camera_name, target_file, exc)
 
     return calib
 
