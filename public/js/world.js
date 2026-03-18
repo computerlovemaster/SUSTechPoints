@@ -214,6 +214,8 @@ function World(data, sceneName, frame, coordinatesOffset, on_preload_finished){
     this.data = data;
     this.sceneMeta = this.data.getMetaBySceneName(sceneName);
     this.frameInfo = new FrameInfo(this.data, this.sceneMeta, sceneName, frame);
+    this.frameCalib = {};
+    this.frameCalibLoaded = false;
 
 
     this.coordinatesOffset = coordinatesOffset;
@@ -231,6 +233,58 @@ function World(data, sceneName, frame, coordinatesOffset, on_preload_finished){
     this.aux_lidars = new AuxLidarManager(this.sceneMeta, this, this.frameInfo);
     this.egoPose = new EgoPose(this.sceneMeta, this, this.FrameInfo);
 
+    this.getCameraCalib = function(cameraName){
+        if (!cameraName){
+            return null;
+        }
+
+        if (this.frameCalib && this.frameCalib[cameraName]){
+            return this.frameCalib[cameraName];
+        }
+
+        if (this.sceneMeta &&
+            this.sceneMeta.calib &&
+            this.sceneMeta.calib.camera &&
+            this.sceneMeta.calib.camera[cameraName]){
+            return this.sceneMeta.calib.camera[cameraName];
+        }
+
+        return null;
+    };
+
+    this.loadCameraCalib = function(on_preload_finished){
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = ()=>{
+            if (xhr.readyState != 4){
+                return;
+            }
+
+            if (xhr.status == 200){
+                try{
+                    let calib = JSON.parse(xhr.responseText);
+                    this.frameCalib = calib || {};
+                }
+                catch(err){
+                    console.error("failed to parse frame calib", err);
+                    this.frameCalib = {};
+                }
+            }
+            else{
+                this.frameCalib = {};
+            }
+
+            this.frameCalibLoaded = true;
+            if (on_preload_finished){
+                on_preload_finished();
+            }
+        };
+
+        let scene = encodeURIComponent(this.frameInfo.scene);
+        let frame = encodeURIComponent(this.frameInfo.frame);
+        xhr.open('GET', `/load_camera_calib?scene=${scene}&frame=${frame}`, true);
+        xhr.send();
+    };
+
     // todo: state of world could be put in  a variable
     // but still need mulitple flags.
 
@@ -244,7 +298,8 @@ function World(data, sceneName, frame, coordinatesOffset, on_preload_finished){
                //this.cameras.loaded() &&
                this.aux_lidars.preloaded() && 
                this.radars.preloaded()&&
-               this.egoPose.preloaded;
+               this.egoPose.preloaded &&
+               this.frameCalibLoaded;
     };
 
     this.create_time = 0;
@@ -466,7 +521,8 @@ function World(data, sceneName, frame, coordinatesOffset, on_preload_finished){
         this.radars.preload(_preload_cb);
         this.cameras.load(_preload_cb, this.data.active_camera_name);
         this.aux_lidars.preload(_preload_cb);
-        this.egoPose.preload(_preload_cb);        
+        this.egoPose.preload(_preload_cb);
+        this.loadCameraCalib(_preload_cb);
     };
 
     this.scene = null,
@@ -606,4 +662,3 @@ function World(data, sceneName, frame, coordinatesOffset, on_preload_finished){
 }
 
 export {World};
-

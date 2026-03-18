@@ -56,6 +56,9 @@ Adjust the contents to customize.
                +- camera
                     +- front.json
                     +- left.json
+                    +- right
+                         +- 0000.json
+                         +- 0001.json
                +- radar
                     +- front_points.json
                     +- front_tracks.json
@@ -69,5 +72,36 @@ Adjust the contents to customize.
 label is the directory to save the annotation result.
 
 calib is the calibration matrix from point cloud to image. it's optional, but if provided, the box is projected on the image so as to assist the annotation.
+
+Dynamic camera extrinsic is supported with frame-level calib files:
+- `data/<scene>/calib/camera/<camera_name>/<frame>.json`
+- fallback to static calib `data/<scene>/calib/camera/<camera_name>.json`
+- priority is: frame-level calib > static calib > no projection for that camera
+
+### Validate dynamic camera calib
+
+Use the validator script to check local data priority and backend API consistency:
+
+```bash
+python tools/validate_dynamic_camera_calib.py --scene example --frame 000950
+```
+
+Validate all discoverable frames in a scene:
+
+```bash
+python tools/validate_dynamic_camera_calib.py --scene example
+```
+
+API smoke only:
+
+```bash
+python tools/validate_dynamic_camera_calib.py --scene example --api-only
+```
+
+Strict mode (warnings become failure):
+
+```bash
+python tools/validate_dynamic_camera_calib.py --scene example --strict
+```
 
 check examples in `./data/example`

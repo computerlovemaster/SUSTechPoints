@@ -218,3 +218,16 @@ box被选择后, 左边的３个子窗口都可以对box进行调整．鼠标移
 ## Object type configuration
 
 如果需要修改模型的目标类型/大小/颜色,可以修改 [obj_cfg.js](src/public/js/../../../public/js/obj_cfg.js)文件.
+
+## 动态相机外参（可选）
+
+默认支持静态相机外参文件：
+- `data/<scene>/calib/camera/<camera_name>.json`
+
+也支持按帧动态相机外参文件：
+- `data/<scene>/calib/camera/<camera_name>/<frame>.json`
+
+加载优先级如下：
+- 按帧外参
+- 静态外参
+- 都不存在时该相机不做投影（其余功能不受影响）

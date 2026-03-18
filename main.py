@@ -166,6 +166,11 @@ class Root(object):
     def load_ego_pose(self, scene, frame):
       return scene_reader.read_ego_pose(scene, frame)
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def load_camera_calib(self, scene, frame):
+      return scene_reader.read_camera_calib(scene, frame)
+
 
     @cherrypy.expose    
     @cherrypy.tools.json_out()
